@@ -17,12 +17,29 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Updater, CommandHandler, CallbackQueryHandler, CallbackContext
 )
-from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.background 
+import BackgroundSchedulerfrom requests.adapters 
+import HTTPAdapter
+from urllib3.util.retry 
+import Retry
+
 
 # --------------------- Налаштування ---------------------
 TOKEN = "8566470882:AAFjaELFYcGKXEvP_-q-x7MxghYl0BlNBHw"  # замініть на свій токен
 URL = "https://icp.administracionelectronica.gob.es/icpplus/index.html"
 HEADERS = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X)"}
+session = requests.Session()
+
+retry = Retry(
+    total=5,
+    backoff_factor=1.5,
+    status_forcelist=[429, 500, 502, 503, 504],
+    allowed_methods=["GET", "HEAD"]
+)
+
+adapter = HTTPAdapter(max_retries=retry)
+session.mount("https://", adapter)
+session.mount("http://", adapter)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -131,7 +148,7 @@ def button_handler(update: Update, context: CallbackContext):
 def check_slots():
     """Парсер всіх провінцій та типів"""
     try:
-        r = requests.get(URL, headers=HEADERS, timeout=15)
+        r = requests.get(URL, headers=HEADERS, timeout=(10, 45))
         soup = BeautifulSoup(r.text, "lxml")
         slots = []
         for province in PROVINCES:
